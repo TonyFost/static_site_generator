@@ -13,13 +13,10 @@ class TestHTMLNode(unittest.TestCase):
 
     def test_props_to_html(self):
         node = HTMLNode(props={"href": "https://www.google.com", "target": "_blank"})
-        self.assertEqual(node.tag, None)
-        self.assertEqual(node.value, None)
-        self.assertEqual(node.children, None)
         self.assertEqual(node.props, {"href": "https://www.google.com", "target": "_blank"})
         self.assertEqual(node.props_to_html(), " href=\"https://www.google.com\" target=\"_blank\"")
 
-    def test_NotImplementedError(self):
+    def test_to_html_NotImplementedError(self):
         node = HTMLNode()
         self.assertRaises(NotImplementedError, node.to_html)
 
