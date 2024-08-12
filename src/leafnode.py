@@ -6,7 +6,7 @@ class LeafNode(HTMLNode):
 
     def to_html(self):
         if not self.value:
-            raise ValueError
+            raise ValueError("No value passed to Lead Node")
 
         if self.tag:
             open_tag = f"<{self.tag}{self.props_to_html()}>"

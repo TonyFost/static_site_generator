@@ -8,7 +8,7 @@ class HTMLNode():
         self.props = props
 
     def to_html(self):
-        raise NotImplementedError
+        raise NotImplementedError("Method 'to_html' not implemented on HTML Node.")
     
     def props_to_html(self):
         return reduce(lambda x,y: f"{x} {y[0]}=\"{y[1]}\"", self.props.items(), "") if self.props else ""
