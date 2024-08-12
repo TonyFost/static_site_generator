@@ -9,7 +9,7 @@ class TextNode():
         return self.text == other_node.text and self.text_type == other_node.text_type and self.url == other_node.url
     
     def __repr__(self):
-        return f"TextNode({self.text}, {self.text_type}, {self.url})"
+        return f"TextNode({self.text}, {self.text_type}, {self.url})" if self.url else f"TextNode({self.text}, {self.text_type})"
 
 
 
