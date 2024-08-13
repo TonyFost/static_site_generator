@@ -6,6 +6,8 @@ from textnode import text_node_to_html_node
 from textnode import split_nodes_delimiter
 from textnode import extract_markdown_images
 from textnode import extract_markdown_links
+from textnode import split_nodes_image
+from textnode import split_nodes_link
 
 
 class TestTextNode(unittest.TestCase):
@@ -187,6 +189,124 @@ class TestTextNode(unittest.TestCase):
         extracted_links = extract_markdown_links(text)
         self.assertEqual(extracted_links[0][0], "to youtube")
         self.assertEqual(extracted_links[0][1], "https://www.youtube.com/@bootdotdev")
+    
+    def test_text_node_image_delimiter_not_list(self):
+        node = TextNode("bad *text", "text")
+        with self.assertRaises(TypeError) as cm:
+            split_nodes_image(node)
+        self.assertEqual(cm.exception.args[0], "Expected list of TextNodes, received TextNode")
+
+    def test_text_node_image_delimiter_only_images(self):
+        text = "This is text with a ![rick roll](https://i.imgur.com/aKaOqIh.gif) and ![obi wan](https://i.imgur.com/fJRm4Vk.jpeg)"
+        node = TextNode(text, "text")
+        node_list = split_nodes_image([node])
+        self.assertEqual(node_list[0].text, "This is text with a ")
+        self.assertEqual(node_list[0].text_type, "text")
+        self.assertEqual(node_list[1].text, "rick roll")
+        self.assertEqual(node_list[1].text_type, "image")
+        self.assertEqual(node_list[1].url, "https://i.imgur.com/aKaOqIh.gif")
+        self.assertEqual(node_list[2].text, " and ")
+        self.assertEqual(node_list[2].text_type, "text")
+        self.assertEqual(node_list[3].text, "obi wan")
+        self.assertEqual(node_list[3].text_type, "image")
+        self.assertEqual(node_list[3].url, "https://i.imgur.com/fJRm4Vk.jpeg")
+    
+    def test_text_node_link_delimiter_not_list(self):
+        node = TextNode("bad *text", "text")
+        with self.assertRaises(TypeError) as cm:
+            split_nodes_link(node)
+        self.assertEqual(cm.exception.args[0], "Expected list of TextNodes, received TextNode")
+
+    def test_text_node_link_delimiter_only_links(self):
+        text = "This is text with a link [to boot dev](https://www.boot.dev) and [to youtube](https://www.youtube.com/@bootdotdev)"
+        node = TextNode(text, "text")
+        node_list = split_nodes_link([node])
+        self.assertEqual(node_list[0].text, "This is text with a link ")
+        self.assertEqual(node_list[0].text_type, "text")
+        self.assertEqual(node_list[1].text, "to boot dev")
+        self.assertEqual(node_list[1].text_type, "link")
+        self.assertEqual(node_list[1].url, "https://www.boot.dev")
+        self.assertEqual(node_list[2].text, " and ")
+        self.assertEqual(node_list[2].text_type, "text")
+        self.assertEqual(node_list[3].text, "to youtube")
+        self.assertEqual(node_list[3].text_type, "link")
+        self.assertEqual(node_list[3].url, "https://www.youtube.com/@bootdotdev")
+
+    def test_text_node_image_delimiter_images_before(self):
+        text = "This is text with a ![rick roll](https://i.imgur.com/aKaOqIh.gif) and [obi wan](https://i.imgur.com/fJRm4Vk.jpeg)"
+        node = TextNode(text, "text")
+        node_list = split_nodes_image([node])
+        self.assertEqual(node_list[0].text, "This is text with a ")
+        self.assertEqual(node_list[0].text_type, "text")
+        self.assertEqual(node_list[1].text, "rick roll")
+        self.assertEqual(node_list[1].text_type, "image")
+        self.assertEqual(node_list[1].url, "https://i.imgur.com/aKaOqIh.gif")
+        self.assertEqual(node_list[2].text, " and [obi wan](https://i.imgur.com/fJRm4Vk.jpeg)")
+        self.assertEqual(node_list[2].text_type, "text")
+
+    def test_text_node_link_delimiter_link_before(self):
+        text = "This is text with a link [to boot dev](https://www.boot.dev) and ![to youtube](https://www.youtube.com/@bootdotdev)"
+        node = TextNode(text, "text")
+        node_list = split_nodes_link([node])
+        self.assertEqual(node_list[0].text, "This is text with a link ")
+        self.assertEqual(node_list[0].text_type, "text")
+        self.assertEqual(node_list[1].text, "to boot dev")
+        self.assertEqual(node_list[1].text_type, "link")
+        self.assertEqual(node_list[1].url, "https://www.boot.dev")
+        self.assertEqual(node_list[2].text, " and ![to youtube](https://www.youtube.com/@bootdotdev)")
+        self.assertEqual(node_list[2].text_type, "text")
+
+    def test_text_node_image_delimiter_images_after(self):
+        text = "This is text with a [rick roll](https://i.imgur.com/aKaOqIh.gif) and ![obi wan](https://i.imgur.com/fJRm4Vk.jpeg)"
+        node = TextNode(text, "text")
+        node_list = split_nodes_image([node])
+        self.assertEqual(node_list[0].text, "This is text with a [rick roll](https://i.imgur.com/aKaOqIh.gif) and ")
+        self.assertEqual(node_list[0].text_type, "text")
+        self.assertEqual(node_list[1].text, "obi wan")
+        self.assertEqual(node_list[1].text_type, "image")
+        self.assertEqual(node_list[1].url, "https://i.imgur.com/fJRm4Vk.jpeg")
+        self.assertEqual(node_list[2].text, "")
+        self.assertEqual(node_list[2].text_type, "text")
+
+    def test_text_node_link_delimiter_link_after(self):
+        text = "This is text with a link ![to boot dev](https://www.boot.dev) and [to youtube](https://www.youtube.com/@bootdotdev)"
+        node = TextNode(text, "text")
+        node_list = split_nodes_link([node])
+        self.assertEqual(node_list[0].text, "This is text with a link ![to boot dev](https://www.boot.dev) and ")
+        self.assertEqual(node_list[0].text_type, "text")
+        self.assertEqual(node_list[1].text, "to youtube")
+        self.assertEqual(node_list[1].text_type, "link")
+        self.assertEqual(node_list[1].url, "https://www.youtube.com/@bootdotdev")
+        self.assertEqual(node_list[2].text, "")
+        self.assertEqual(node_list[2].text_type, "text")
+
+    def test_text_node_link_delimiter_link_surrounded_by_images(self):
+        text = "This is text with a link ![to boot dev](https://www.boot.dev) and [to youtube](https://www.youtube.com/@bootdotdev), and then another image ![to boot dev](https://www.boot.dev)"
+        node = TextNode(text, "text")
+        node_list = split_nodes_link([node])
+        self.assertEqual(node_list[0].text, "This is text with a link ![to boot dev](https://www.boot.dev) and ")
+        self.assertEqual(node_list[0].text_type, "text")
+        self.assertEqual(node_list[1].text, "to youtube")
+        self.assertEqual(node_list[1].text_type, "link")
+        self.assertEqual(node_list[1].url, "https://www.youtube.com/@bootdotdev")
+        self.assertEqual(node_list[2].text, ", and then another image ![to boot dev](https://www.boot.dev)")
+        self.assertEqual(node_list[2].text_type, "text")
+
+    def test_text_node_link_delimiter_link_surrounds_image(self):
+        text = "This is text with a link [to boot dev](https://www.boot.dev) and ![to youtube](https://www.youtube.com/@bootdotdev) with another link here [to youtube](https://www.youtube.com/@bootdotdev)"
+        node = TextNode(text, "text")
+        node_list = split_nodes_link([node])
+        self.assertEqual(node_list[0].text, "This is text with a link ")
+        self.assertEqual(node_list[0].text_type, "text")
+        self.assertEqual(node_list[1].text, "to boot dev")
+        self.assertEqual(node_list[1].text_type, "link")
+        self.assertEqual(node_list[1].url, "https://www.boot.dev")
+        self.assertEqual(node_list[2].text, " and ![to youtube](https://www.youtube.com/@bootdotdev) with another link here ")
+        self.assertEqual(node_list[2].text_type, "text")
+        self.assertEqual(node_list[3].text, "to youtube")
+        self.assertEqual(node_list[3].text_type, "link")
+        self.assertEqual(node_list[3].url, "https://www.youtube.com/@bootdotdev")
+
 
     # def test_text_node_(self):
     #     node = TextNode("text", "text_type")
