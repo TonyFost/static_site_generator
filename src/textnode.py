@@ -1,4 +1,5 @@
 from leafnode import LeafNode
+import re
 
 class TextNode():
     def __init__(self, text:str, text_type:str, url:str=None):
@@ -54,6 +55,14 @@ def split_nodes_delimiter(old_nodes:list, delimiter, text_type):
 
     return new_nodes_list
 
+def extract_markdown_images(text):
+    matches = re.findall(r"!\[(.*?)\]\((.*?)\)", text)
+    return matches
+
+def extract_markdown_links(text):
+    matches = re.findall(r"(?<!!)\[(.*?)\]\((.*?)\)", text)
+    # matches = re.findall(r"(?:[^!])[(.*?)\]\((.*?)\)", text)
+    return matches
 
 def main():
     new_text_node = TextNode("This is a text node", "bold", "https://github.com/TonyFost")

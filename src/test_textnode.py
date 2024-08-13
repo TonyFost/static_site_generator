@@ -4,6 +4,8 @@ from textnode import TextNode
 from leafnode import LeafNode
 from textnode import text_node_to_html_node
 from textnode import split_nodes_delimiter
+from textnode import extract_markdown_images
+from textnode import extract_markdown_links
 
 
 class TestTextNode(unittest.TestCase):
@@ -145,6 +147,46 @@ class TestTextNode(unittest.TestCase):
         self.assertEqual(node_list[1].text_type, "code")
         self.assertEqual(node_list[2].text, "")
         self.assertEqual(node_list[2].text_type, "text")
+
+    def test_text_node_markdown_images_only(self):
+        text = "This is text with a ![rick roll](https://i.imgur.com/aKaOqIh.gif) and ![obi wan](https://i.imgur.com/fJRm4Vk.jpeg)"
+        extracted_images = extract_markdown_images(text)
+        self.assertEqual(extracted_images[0][0], "rick roll")
+        self.assertEqual(extracted_images[0][1], "https://i.imgur.com/aKaOqIh.gif")
+        self.assertEqual(extracted_images[1][0], "obi wan")
+        self.assertEqual(extracted_images[1][1], "https://i.imgur.com/fJRm4Vk.jpeg")
+
+    def test_text_node_markdown_links_only(self):
+        text = "This is text with a link [to boot dev](https://www.boot.dev) and [to youtube](https://www.youtube.com/@bootdotdev)"
+        extracted_links = extract_markdown_links(text)
+        self.assertEqual(extracted_links[0][0], "to boot dev")
+        self.assertEqual(extracted_links[0][1], "https://www.boot.dev")
+        self.assertEqual(extracted_links[1][0], "to youtube")
+        self.assertEqual(extracted_links[1][1], "https://www.youtube.com/@bootdotdev")
+
+    def test_text_node_markdown_images_before(self):
+        text = "This is text with a ![rick roll](https://i.imgur.com/aKaOqIh.gif) and [obi wan](https://i.imgur.com/fJRm4Vk.jpeg)"
+        extracted_images = extract_markdown_images(text)
+        self.assertEqual(extracted_images[0][0], "rick roll")
+        self.assertEqual(extracted_images[0][1], "https://i.imgur.com/aKaOqIh.gif")
+
+    def test_text_node_markdown_link_before(self):
+        text = "This is text with a link [to boot dev](https://www.boot.dev) and ![to youtube](https://www.youtube.com/@bootdotdev)"
+        extracted_links = extract_markdown_links(text)
+        self.assertEqual(extracted_links[0][0], "to boot dev")
+        self.assertEqual(extracted_links[0][1], "https://www.boot.dev")
+
+    def test_text_node_markdown_images_after(self):
+        text = "This is text with a [rick roll](https://i.imgur.com/aKaOqIh.gif) and ![obi wan](https://i.imgur.com/fJRm4Vk.jpeg)"
+        extracted_images = extract_markdown_images(text)
+        self.assertEqual(extracted_images[0][0], "obi wan")
+        self.assertEqual(extracted_images[0][1], "https://i.imgur.com/fJRm4Vk.jpeg")
+
+    def test_text_node_markdown_link_after(self):
+        text = "This is text with a link ![to boot dev](https://www.boot.dev) and [to youtube](https://www.youtube.com/@bootdotdev)"
+        extracted_links = extract_markdown_links(text)
+        self.assertEqual(extracted_links[0][0], "to youtube")
+        self.assertEqual(extracted_links[0][1], "https://www.youtube.com/@bootdotdev")
 
     # def test_text_node_(self):
     #     node = TextNode("text", "text_type")
