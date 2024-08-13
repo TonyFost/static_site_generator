@@ -69,8 +69,9 @@ class TestTextNode(unittest.TestCase):
 
     def test_text_node_to_leaf_node_invalid(self):
         node = TextNode("alt text", "invalid", "URL")
-        # l_node = text_node_to_html_node(node)
-        self.assertRaises(Exception, text_node_to_html_node)
+        with self.assertRaises(Exception) as cm:
+            text_node_to_html_node(node)
+        self.assertEqual(cm.exception.args[0], "Unknown TextNode text type")
 
     # def test_text_node_(self):
     #     node = TextNode("text", "text_type")
