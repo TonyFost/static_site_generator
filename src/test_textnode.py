@@ -3,6 +3,7 @@ import unittest
 from textnode import TextNode
 from leafnode import LeafNode
 from textnode import text_node_to_html_node
+from textnode import split_nodes_delimiter
 
 
 class TestTextNode(unittest.TestCase):
@@ -72,6 +73,78 @@ class TestTextNode(unittest.TestCase):
         with self.assertRaises(Exception) as cm:
             text_node_to_html_node(node)
         self.assertEqual(cm.exception.args[0], "Unknown TextNode text type")
+
+    def test_text_node_to_delimiter_uneven(self):
+        node = TextNode("bad *text", "text")
+        with self.assertRaises(ValueError) as cm:
+            split_nodes_delimiter([node], "*", "italic")
+        self.assertEqual(cm.exception.args[0], "Uneven delimiter * in node text: bad *text")
+
+    def test_text_node_to_delimiter_not_list(self):
+        node = TextNode("bad *text", "text")
+        with self.assertRaises(TypeError) as cm:
+            split_nodes_delimiter(node, "*", "italic")
+        self.assertEqual(cm.exception.args[0], "Expected list of TextNodes, received TextNode")
+
+    def test_text_node_to_delimiter_italic(self):
+        node = TextNode("good italic *text* is good", "text")
+        node_list = split_nodes_delimiter([node], "*", "italic")
+        self.assertEqual(node_list[0].text, "good italic ")
+        self.assertEqual(node_list[0].text_type, "text")
+        self.assertEqual(node_list[1].text, "text")
+        self.assertEqual(node_list[1].text_type, "italic")
+        self.assertEqual(node_list[2].text, " is good")
+        self.assertEqual(node_list[2].text_type, "text")
+
+    def test_text_node_to_delimiter_bold(self):
+        node = TextNode("good bold **text** is good", "text")
+        node_list = split_nodes_delimiter([node], "**", "bold")
+        self.assertEqual(node_list[0].text, "good bold ")
+        self.assertEqual(node_list[0].text_type, "text")
+        self.assertEqual(node_list[1].text, "text")
+        self.assertEqual(node_list[1].text_type, "bold")
+        self.assertEqual(node_list[2].text, " is good")
+        self.assertEqual(node_list[2].text_type, "text")
+
+    def test_text_node_to_delimiter_code(self):
+        node = TextNode("good code `text` is good", "text")
+        node_list = split_nodes_delimiter([node], "`", "code")
+        self.assertEqual(node_list[0].text, "good code ")
+        self.assertEqual(node_list[0].text_type, "text")
+        self.assertEqual(node_list[1].text, "text")
+        self.assertEqual(node_list[1].text_type, "code")
+        self.assertEqual(node_list[2].text, " is good")
+        self.assertEqual(node_list[2].text_type, "text")
+
+    def test_text_node_to_delimiter_at_end(self):
+        node = TextNode("good code `text`", "text")
+        node_list = split_nodes_delimiter([node], "`", "code")
+        self.assertEqual(node_list[0].text, "good code ")
+        self.assertEqual(node_list[0].text_type, "text")
+        self.assertEqual(node_list[1].text, "text")
+        self.assertEqual(node_list[1].text_type, "code")
+        self.assertEqual(node_list[2].text, "")
+        self.assertEqual(node_list[2].text_type, "text")
+
+    def test_text_node_to_delimiter_at_start(self):
+        node = TextNode("`text` code", "text")
+        node_list = split_nodes_delimiter([node], "`", "code")
+        self.assertEqual(node_list[0].text, "")
+        self.assertEqual(node_list[0].text_type, "text")
+        self.assertEqual(node_list[1].text, "text")
+        self.assertEqual(node_list[1].text_type, "code")
+        self.assertEqual(node_list[2].text, " code")
+        self.assertEqual(node_list[2].text_type, "text")
+
+    def test_text_node_to_delimiter_only_delimiter(self):
+        node = TextNode("`text`", "text")
+        node_list = split_nodes_delimiter([node], "`", "code")
+        self.assertEqual(node_list[0].text, "")
+        self.assertEqual(node_list[0].text_type, "text")
+        self.assertEqual(node_list[1].text, "text")
+        self.assertEqual(node_list[1].text_type, "code")
+        self.assertEqual(node_list[2].text, "")
+        self.assertEqual(node_list[2].text_type, "text")
 
     # def test_text_node_(self):
     #     node = TextNode("text", "text_type")

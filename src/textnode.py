@@ -30,6 +30,30 @@ def text_node_to_html_node(text_node:TextNode):
         case _:
             raise Exception("Unknown TextNode text type")
 
+def split_nodes_delimiter(old_nodes:list, delimiter, text_type):
+    new_nodes_list = []
+
+    if type(old_nodes) != list:
+        raise TypeError(f"Expected list of TextNodes, received {type(old_nodes).__name__}")
+
+    for node in old_nodes:
+        if node.text_type != "text":
+            new_nodes_list.append(node)
+
+        delimited_texts = node.text.split(delimiter)
+        if len(delimited_texts) == 1:
+            new_nodes_list.append(node)
+
+        if len(delimited_texts) % 2 == 0:
+            raise ValueError(f"Uneven delimiter {delimiter} in node text: {node.text}")
+        
+        for i in range(len(delimited_texts)):
+            node_text = delimited_texts[i]
+            node_text_type = "text" if i % 2 == 0 else text_type
+            new_nodes_list.append(TextNode(node_text, node_text_type))
+
+    return new_nodes_list
+
 
 def main():
     new_text_node = TextNode("This is a text node", "bold", "https://github.com/TonyFost")
