@@ -53,7 +53,8 @@ def split_nodes_delimiter(old_nodes:list, delimiter, text_type):
         for i in range(len(delimited_texts)):
             node_text = delimited_texts[i]
             node_text_type = "text" if i % 2 == 0 else text_type
-            new_nodes_list.append(TextNode(node_text, node_text_type))
+            if node_text:
+                new_nodes_list.append(TextNode(node_text, node_text_type))
 
     return new_nodes_list
 
@@ -91,7 +92,8 @@ def split_nodes_image(old_nodes):
             new_nodes_list.append(TextNode(image[0], "image", image[1]))
             current_text = delimited_texts[1]
 
-        new_nodes_list.append(TextNode(current_text, "text"))
+        if current_text:
+            new_nodes_list.append(TextNode(current_text, "text"))
 
     return new_nodes_list
 
@@ -127,9 +129,19 @@ def split_nodes_link(old_nodes):
             current_text = delimited_texts[1]
             skip_delimiter_text = ""
 
-        new_nodes_list.append(TextNode(current_text, "text"))
+        if current_text:
+            new_nodes_list.append(TextNode(current_text, "text"))
 
     return new_nodes_list
+
+def text_to_textnodes(text):
+    base_text_node = TextNode(text, "text")
+    text_node_list = split_nodes_delimiter([base_text_node], "**", "bold")
+    text_node_list = split_nodes_delimiter(text_node_list, "*", "italic")
+    text_node_list = split_nodes_delimiter(text_node_list, "`", "code")
+    text_node_list = split_nodes_image(text_node_list)
+    text_node_list = split_nodes_link(text_node_list)
+    return text_node_list
 
 def main():
     new_text_node = TextNode("This is a text node", "bold", "https://github.com/TonyFost")
