@@ -106,10 +106,88 @@ def split_nodes_link(old_nodes):
     return new_nodes_list
 
 def text_to_textnodes(text):
-    base_text_node = TextNode(text, "text")
-    text_node_list = split_nodes_delimiter([base_text_node], "**", "bold")
+    base_text_node = [TextNode(text, "text")]
+    text_node_list = split_nodes_delimiter(base_text_node, "**", "bold")
     text_node_list = split_nodes_delimiter(text_node_list, "*", "italic")
     text_node_list = split_nodes_delimiter(text_node_list, "`", "code")
     text_node_list = split_nodes_image(text_node_list)
     text_node_list = split_nodes_link(text_node_list)
     return text_node_list
+
+
+def markdown_to_blocks(markdown):
+    blocks = [line.strip() for line in markdown.split("\n\n") if line != ""]
+    return blocks
+
+def block_to_block_type(md_block):
+    # check header block
+    max_header_length = 6
+    for i in range(len(md_block)):
+        if i > max_header_length:
+            break
+
+        c = md_block[i]
+        if c == "#":
+            continue
+        elif i > 0 and c == " ":
+            return "heading"
+        else:
+            break
+    
+    # check code block
+    if len(md_block) >= 6:
+        check = md_block[:3]
+        if check == "```" and check == md_block[-3:]:
+            return "code"
+        
+    #checks after here need to check every line
+    lines = md_block.split("\n")
+    
+    #check for quoteblock
+    check = False
+    for line in lines:
+        if line[0] == ">":
+            check = True
+        else:
+            check = False
+            break
+    if check:
+        return "quote"
+
+    #check for unordered list
+    check = False
+    for line in lines:
+        if len(line) < 2:
+            check = False
+            break
+
+        if line[:2] == "* " or line[:2] == "- ":
+            check = True
+        else:
+            check = False
+            break
+    if check:
+        return "unordered_list"
+
+    #check for ordered list
+    check = False
+    for i in range(len(lines)):
+        line = lines[i]
+        length_of_check = len(str(i+1)) + 2
+        if len(line) < length_of_check:
+            check = False
+            break
+
+        if line[:length_of_check] == f"{i+1}. ":
+            check = True
+        else:
+            check = False
+            break
+    if check:
+        return "ordered_list"
+    
+    return "paragraph"
+
+
+def markdown_to_html_node(markdown):
+    pass
