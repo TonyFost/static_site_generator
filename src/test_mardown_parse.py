@@ -9,6 +9,12 @@ from markdown_parse import split_nodes_link
 from markdown_parse import text_to_textnodes
 from markdown_parse import markdown_to_blocks
 from markdown_parse import block_to_block_type
+from markdown_parse import handle_quote
+from markdown_parse import handle_list
+from markdown_parse import handle_code
+from markdown_parse import handle_header
+from markdown_parse import handle_paragraph
+from markdown_parse import markdown_to_html_node
 
 
 class TestTextNode(unittest.TestCase):
@@ -507,6 +513,123 @@ Next some extra lines at the end
 11. just kidding here's the last one"""
         result = block_to_block_type(block)
         self.assertEqual(result, "paragraph")
+
+    def test_markdown_parse_handle_quote(self):
+        block = """>This is a basic quoteblock
+>This is more of a quote block
+>Continuing quote block
+>Another line
+>Last line of quote block"""
+        result = handle_quote(block)
+        self.assertEqual(result.tag, "quoteblock")
+
+    def test_markdown_parse_handle_list_unordered_dash(self):
+        block = """- This is a basic unordered_list
+- next item
+- additional item
+- another item
+- last item"""
+        result = handle_list(block)
+        self.assertEqual(result.tag, None)
+        items = result.children
+        for item in items:
+            self.assertEqual(item.tag, "li")
+
+    def test_markdown_parse_handle_list_unordered_asterisk(self):
+        block = """* This is a basic unordered_list
+* next item
+* additional item
+* another item
+* last item"""
+        result = handle_list(block)
+        self.assertEqual(result.tag, None)
+        items = result.children
+        for item in items:
+            self.assertEqual(item.tag, "li")
+
+    def test_markdown_parse_handle_list_ordered(self):
+        block = """1. This is a basic ordered list.
+2. This is another item
+3. This is a third item
+4. This is a fourth item
+5. This is a fifth item
+6. item
+7. sorry I stopped counting
+8. 
+9. might be something
+10. last item
+11. just kidding here's the last one"""
+        result = handle_list(block)
+        self.assertEqual(result.tag, None)
+        items = result.children
+        for item in items:
+            self.assertEqual(item.tag, "li")
+
+    def test_markdown_parse_handle_header(self):
+        block1 = "# This is a basic header"
+        block2 = "## This is a basic header"
+        block3 = "### This is a basic header"
+        block4 = "#### This is a basic header"
+        block5 = "##### This is a basic header"
+        block6 = "###### This is a basic header"
+        result = handle_header(block1)
+        self.assertEqual(result.tag, "h1")
+        result = handle_header(block2)
+        self.assertEqual(result.tag, "h2")
+        result = handle_header(block3)
+        self.assertEqual(result.tag, "h3")
+        result = handle_header(block4)
+        self.assertEqual(result.tag, "h4")
+        result = handle_header(block5)
+        self.assertEqual(result.tag, "h5")
+        result = handle_header(block6)
+        self.assertEqual(result.tag, "h6")
+
+    def test_markdown_parse_handle_paragraph(self):
+        block = """>This is a basic quoteblock
+>This is more of a quote block
+>Continuing quote block
+## Ooops, dropped a line trying to add a header
+>Last line of quote block"""
+        result = handle_paragraph(block)
+        self.assertEqual(result.tag, "p")
+
+    def test_markdown_parse_handle_paragraph(self):
+        block = """```>This is a basic quoteblock
+>This is more of a quote block
+>Continuing quote block
+## **Ooops**, dropped a line trying to add a header
+>Last line of quote block```"""
+        result = handle_code(block)
+        self.assertEqual(result.tag, "pre")
+        result = result.children[0]
+        self.assertEqual(result.tag, "code")
+
+    def test_markdown_parse_markdown_to_html_node(self):
+        block = """This is a paragraph.
+
+>This is a basic quoteblock
+>This is more of a quote block
+
+1. item 1
+2. item 2
+3. item 3
+
+### Heading level 3
+
+```Some code block
+conitnued```
+
+- item a
+- item b
+- item c
+
+"""
+        result = markdown_to_html_node(block)
+        self.assertEqual(result.tag, "div")
+        node_types = ['p', 'quoteblock', 'ol', 'h3', 'pre', 'ul']
+        for i, type in enumerate(node_types):
+            self.assertEqual(result.children[i].tag, type)
 
     #def test_markdown_parse_(self):
 

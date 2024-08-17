@@ -1,6 +1,6 @@
 from textnode import TextNode
+from parentnode import ParentNode
 import re
-from htmlnode import HTMLNode
 
 def split_nodes_delimiter(old_nodes:list, delimiter, text_type):
     new_nodes_list = []
@@ -190,4 +190,57 @@ def block_to_block_type(md_block):
 
 
 def markdown_to_html_node(markdown):
-    pass
+    blocks = markdown_to_blocks(markdown)
+    nodes = []
+
+    for block in blocks:
+        block_type = block_to_block_type(block)
+
+        match (block_type):
+            case ('quote'):
+                html_node = handle_quote(block)
+            case('unordered_list'):
+                html_node = handle_list(block)
+                html_node.tag = 'ul'
+            case('ordered_list'):
+                html_node = handle_list(block)
+                html_node.tag = 'ol'
+            case ('code'):
+                html_node = handle_code(block)
+            case ('heading'):
+                html_node = handle_header(block)
+            case ('paragraph'):
+                html_node = handle_paragraph(block)
+        
+        nodes.append(html_node)
+
+    return ParentNode('div', nodes) 
+
+def handle_quote(block):
+    text = block.lstrip('>').replace('\n>', '\n')
+    children = text_to_textnodes(text)
+    return ParentNode('quoteblock', children)
+
+def handle_list(block):
+    items = block.split('\n')
+    list_children = []
+    for item in items:
+        text_nodes = text_to_textnodes(item.split(' ', 1)[1])
+        list_children.append(ParentNode('li', text_nodes))
+
+    return ParentNode(children=list_children)
+
+def handle_code(block):
+    children = text_to_textnodes(block[3:-3])
+    code_node = ParentNode('code', children)
+    return ParentNode('pre', [code_node])
+
+def handle_header(block):
+    text = block.split(' ', 1)
+    header_count = len(text[0])
+    children = text_to_textnodes(text[1])
+    return ParentNode(f"h{header_count}", children)
+
+def handle_paragraph(block):
+    children = text_to_textnodes(block)
+    return ParentNode('p', children)
