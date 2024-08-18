@@ -14,4 +14,5 @@ class LeafNode(HTMLNode):
             return open_tag + self.value + close_tag
         else:
             return self.value
-
+    def __repr__(self):
+        return f"LeafNode(tag={self.tag}, value={self.value}, props={self.props})"

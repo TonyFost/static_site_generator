@@ -1,4 +1,5 @@
 from textnode import TextNode
+from textnode import text_node_to_html_node
 from parentnode import ParentNode
 import re
 
@@ -90,7 +91,8 @@ def split_nodes_link(old_nodes):
             delimiter = f"[{link[0]}]({link[1]})"
             delimited_texts = current_text.split(delimiter, 1)
 
-            while delimited_texts[0][-1] == "!": #check if it was an image
+            while delimited_texts[0] and delimited_texts[0][-1] == "!": #check if it was an image
+
                 skip_delimiter_text += delimited_texts[0] + delimiter
                 current_text = delimited_texts[1]
                 delimited_texts = current_text.split(delimiter, 1)
@@ -216,22 +218,30 @@ def markdown_to_html_node(markdown):
 
     return ParentNode('div', nodes) 
 
+def help_transform_textnode_to_leafnode(text_nodes):
+    for i in range(len(text_nodes)):
+        text_nodes[i] = text_node_to_html_node(text_nodes[i])
+    return text_nodes
+
 def handle_quote(block):
-    text = block.lstrip('>').replace('\n>', '\n')
+    text = block.lstrip('> ').lstrip('>').replace('\n> ', '\n').replace('\n>', '\n')
     children = text_to_textnodes(text)
-    return ParentNode('quoteblock', children)
+    help_transform_textnode_to_leafnode(children)
+    return ParentNode('blockquote', children)
 
 def handle_list(block):
     items = block.split('\n')
     list_children = []
     for item in items:
         text_nodes = text_to_textnodes(item.split(' ', 1)[1])
+        help_transform_textnode_to_leafnode(text_nodes)
         list_children.append(ParentNode('li', text_nodes))
 
     return ParentNode(children=list_children)
 
 def handle_code(block):
     children = text_to_textnodes(block[3:-3])
+    help_transform_textnode_to_leafnode(children)
     code_node = ParentNode('code', children)
     return ParentNode('pre', [code_node])
 
@@ -239,8 +249,19 @@ def handle_header(block):
     text = block.split(' ', 1)
     header_count = len(text[0])
     children = text_to_textnodes(text[1])
+    help_transform_textnode_to_leafnode(children)
     return ParentNode(f"h{header_count}", children)
 
 def handle_paragraph(block):
     children = text_to_textnodes(block)
+    help_transform_textnode_to_leafnode(children)
     return ParentNode('p', children)
+
+
+def extract_title(markdown):
+    md_lines = markdown.split('\n')
+    for line in md_lines:
+        if len(line) >= 3 and line[:2] == "# ":
+            return line[2:]
+        
+    raise Exception("Unable to determine title, no h1 header")

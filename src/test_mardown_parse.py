@@ -15,6 +15,7 @@ from markdown_parse import handle_code
 from markdown_parse import handle_header
 from markdown_parse import handle_paragraph
 from markdown_parse import markdown_to_html_node
+from markdown_parse import extract_title
 
 
 class TestTextNode(unittest.TestCase):
@@ -366,12 +367,12 @@ Next some extra lines at the end
         self.assertEqual(result, "paragraph")
 
     def test_markdown_parse_block_to_block_type_quote(self):
-        block = ">This is a basic quoteblock"
+        block = ">This is a basic blockquote"
         result = block_to_block_type(block)
         self.assertEqual(result, "quote")
 
     def test_markdown_parse_block_to_block_type_quote_multi_line(self):
-        block = """>This is a basic quoteblock
+        block = """>This is a basic blockquote
 >This is more of a quote block
 >Continuing quote block
 >Another line
@@ -380,7 +381,7 @@ Next some extra lines at the end
         self.assertEqual(result, "quote")
 
     def test_markdown_parse_block_to_block_type_quote_missed_one_line(self):
-        block = """>This is a basic quoteblock
+        block = """>This is a basic blockquote
 >This is more of a quote block
 >Continuing quote block
 ## Ooops, dropped a line trying to add a header
@@ -515,13 +516,13 @@ Next some extra lines at the end
         self.assertEqual(result, "paragraph")
 
     def test_markdown_parse_handle_quote(self):
-        block = """>This is a basic quoteblock
+        block = """>This is a basic blockquote
 >This is more of a quote block
 >Continuing quote block
 >Another line
 >Last line of quote block"""
         result = handle_quote(block)
-        self.assertEqual(result.tag, "quoteblock")
+        self.assertEqual(result.tag, "blockquote")
 
     def test_markdown_parse_handle_list_unordered_dash(self):
         block = """- This is a basic unordered_list
@@ -586,7 +587,7 @@ Next some extra lines at the end
         self.assertEqual(result.tag, "h6")
 
     def test_markdown_parse_handle_paragraph(self):
-        block = """>This is a basic quoteblock
+        block = """>This is a basic blockquote
 >This is more of a quote block
 >Continuing quote block
 ## Ooops, dropped a line trying to add a header
@@ -595,7 +596,7 @@ Next some extra lines at the end
         self.assertEqual(result.tag, "p")
 
     def test_markdown_parse_handle_paragraph(self):
-        block = """```>This is a basic quoteblock
+        block = """```>This is a basic blockquote
 >This is more of a quote block
 >Continuing quote block
 ## **Ooops**, dropped a line trying to add a header
@@ -608,7 +609,7 @@ Next some extra lines at the end
     def test_markdown_parse_markdown_to_html_node(self):
         block = """This is a paragraph.
 
->This is a basic quoteblock
+>This is a basic blockquote
 >This is more of a quote block
 
 1. item 1
@@ -627,9 +628,20 @@ conitnued```
 """
         result = markdown_to_html_node(block)
         self.assertEqual(result.tag, "div")
-        node_types = ['p', 'quoteblock', 'ol', 'h3', 'pre', 'ul']
+        node_types = ['p', 'blockquote', 'ol', 'h3', 'pre', 'ul']
         for i, type in enumerate(node_types):
             self.assertEqual(result.children[i].tag, type)
+
+    def test_markdown_parse_extract_title(self):
+        md = "# Hello"
+        result = extract_title(md)
+        self.assertEqual(result, "Hello")
+
+    def test_markdown_parse_extract_title_not_h1(self):
+        md = "## Hello"
+        with self.assertRaises(Exception) as cm:
+            extract_title(md)
+        self.assertEqual(cm.exception.args[0], "Unable to determine title, no h1 header")
 
     #def test_markdown_parse_(self):
 

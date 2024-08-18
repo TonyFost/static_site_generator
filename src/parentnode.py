@@ -14,3 +14,5 @@ class ParentNode(HTMLNode):
         open_tag = f"<{self.tag}{self.props_to_html()}>"
         close_tag = f"</{self.tag}>"
         return open_tag + reduce(lambda s,children: s + children.to_html(), self.children, "") + close_tag
+    def __repr__(self):
+        return f"ParentNode(tag={self.tag}, children={self.children}, props={self.props})"
